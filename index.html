@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Clevora AI — Smart Workspace</title>
+<style>
+:root{
+  --bg:#f8fafc;--surface:#ffffff;--surface-2:#f1f5f9;--surface-3:#e2e8f0;
+  --border:#e2e8f0;--text:#0f172a;--muted:#64748b;--dim:#94a3b8;
+  --accent:#6366f1;--accent-2:#8b5cf6;--accent-3:#d946ef;
+  --green:#22c55e;--amber:#f59e0b;--red:#ef4444;
+  --radius:14px;--ease:cubic-bezier(.23,1,.32,1);
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,sans-serif;
+}
+[data-theme="dark"]{
+  --bg:#0f172a;--surface:#1e293b;--surface-2:#334155;--surface-3:#475569;
+  --border:#334155;--text:#f1f5f9;--muted:#94a3b8;--dim:#64748b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{height:100dvh;overflow:hidden;background:var(--bg);color:var(--text);transition:background .3s}
+.app{display:flex;flex-direction:column;height:100dvh;max-width:600px;margin:0 auto;position:relative}
+.header{padding:16px 20px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--surface)}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2),var(--accent-3));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:14px}
+.brand-name{font-weight:700;font-size:16px;letter-spacing:-.3px}
+.status-row{display:flex;align-items:center;gap:6px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);transition:all .3s}
+.status-dot.working{background:var(--accent);animation:pulse 1.2s infinite}
+.status-dot.offline{background:var(--amber)}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+.status-text{font-size:12px;font-weight:600;color:var(--muted)}
+.timer{font-size:12px;color:var(--accent);font-weight:600;font-variant-numeric:tabular-nums}
+.canvas{flex:1;overflow-y:auto;padding:24px 20px 140px}
+.welcome{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60%;text-align:center}
+.welcome h1{font-size:28px;font-weight:700;letter-spacing:-.5px;margin-bottom:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2),var(--accent-3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.welcome p{color:var(--muted);font-size:14px;max-width:280px;line-height:1.5}
+.suggestions{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:24px}
+.chip{padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-size:12px;cursor:pointer;transition:all .2s}
+.chip:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+.msg{display:flex;gap:10px;margin-bottom:16px;animation:slideUp .3s var(--ease)}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.msg-avatar{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.msg.user .msg-avatar{background:var(--surface-3);color:var(--text)}
+.msg.ai .msg-avatar{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff}
+.msg-bubble{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.5;max-width:80%}
+.msg.ai .msg-bubble{background:var(--surface-2);border-color:transparent}
+.task-plan{border:1px solid rgba(99,102,241,.3);background:linear-gradient(135deg,rgba(99,102,241,.05),var(--surface));border-radius:12px;padding:14px;margin:8px 0}
+.task-plan-header{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);margin-bottom:8px}
+.plan-steps{list-style:none;padding:0;margin:0}
+.plan-step{display:flex;align-items:flex-start;gap:8px;padding:4px 0;font-size:13px;color:var(--muted)}
+.plan-step.done{color:var(--text)}
+.plan-step-dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--surface-3);flex-shrink:0;margin-top:1px;transition:all .3s}
+.plan-step.done .plan-step-dot{background:var(--green);border-color:var(--green)}
+.composer{position:absolute;bottom:0;left:0;right:0;padding:12px;background:var(--surface);border-top:1px solid var(--border);max-width:600px;margin:0 auto}
+.composer-status{font-size:11px;color:var(--muted);margin-bottom:6px;text-align:center}
+.composer-status.listening{color:var(--amber)}
+.composer-bar{display:flex;align-items:flex-end;gap:8px;background:var(--surface-2);border-radius:18px;padding:6px 8px;border:1px solid var(--border)}
+.icon-btn{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:var(--muted);cursor:pointer;transition:all .2s;flex-shrink:0;font-size:18px}
+.icon-btn:hover{background:var(--surface-3);color:var(--text)}
+.icon-btn.active{background:rgba(99,102,241,.15);color:var(--accent)}
+.text-input{flex:1;min-height:40px;max-height:100px;background:transparent;border:none;color:var(--text);font-size:15px;resize:none;outline:none;font-family:inherit;padding:8px 4px}
+.text-input::placeholder{color:var(--dim)}
+.send-btn{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s;flex-shrink:0}
+.send-btn:hover{transform:scale(1.05);box-shadow:0 4px 16px rgba(99,102,241,.3)}
+.send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:none;justify-content:flex-end;flex-direction:column}
+.sheet-overlay.open{display:flex}
+.sheet{background:var(--surface);border-radius:24px 24px 0 0;padding:20px;max-width:600px;margin:0 auto;width:100%;animation:slideUp .3s var(--ease)}
+.sheet-handle{width:36px;height:4px;background:var(--surface-3);border-radius:2px;margin:0 auto 16px}
+.sheet-title{font-size:18px;font-weight:700;margin-bottom:16px;text-align:center}
+.sheet-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.sheet-tile{padding:14px;border-radius:14px;background:var(--surface-2);border:1px solid var(--border);cursor:pointer;transition:all .2s;text-align:center}
+.sheet-tile:hover{border-color:var(--accent);transform:translateY(-2px)}
+.sheet-tile.disabled{opacity:.4;cursor:not-allowed}
+.sheet-tile.disabled:hover{transform:none;border-color:var(--border)}
+.tile-icon{font-size:24px;margin-bottom:6px}
+.tile-label{font-size:13px;font-weight:600;color:var(--text)}
+.tile-reason{font-size:10px;color:var(--dim);margin-top:2px}
+.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:none}
+.settings-overlay.open{display:block}
+.settings-panel{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface);border-radius:20px;padding:24px;width:90%;max-width:380px;max-height:80vh;overflow-y:auto}
+.settings-panel h2{font-size:18px;font-weight:700;margin-bottom:16px;text-align:center}
+.setting-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.setting-row:last-child{border:none}
+.setting-label{font-size:14px;font-weight:500}
+.setting-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.theme-opts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.theme-opt{padding:10px;border-radius:10px;border:2px solid var(--border);cursor:pointer;text-align:center;font-size:12px;transition:all .2s}
+.theme-opt:hover{border-color:var(--accent)}
+.theme-opt.active{border-color:var(--accent);background:rgba(99,102,241,.05)}
+.toggle{width:44px;height:24px;background:var(--surface-3);border-radius:999px;position:relative;cursor:pointer;transition:background .3s;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .3s}
+.toggle.on::after{transform:translateX(20px)}
+.close-btn{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:8px;background:var(--surface-2);border:none;cursor:pointer;font-size:16px;color:var(--muted)}
+@media(max-width:400px){.welcome h1{font-size:24px}.sheet-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="header"><div class="brand"><div class="logo">C</div><span class="brand-name">Clevora</span></div><div class="status-row"><div class="status-dot" id="statusDot"></div><span class="status-text" id="statusText">Ready</span><span class="timer" id="timer" style="display:none">0s</span><button class="icon-btn" style="margin-left:8px;width:32px;height:32px" onclick="toggleSettings()">⚙</button></div></div>
+<div class="canvas" id="canvas"><div class="welcome" id="welcome"><h1>What can Clevora do for you?</h1><p>Smart AI workspace. Ask anything in Hindi or English.</p><div class="suggestions"><div class="chip" onclick="quickAsk('Write a blog post about AI')">✍️ Write a blog</div><div class="chip" onclick="quickAsk('Create a logo design concept')">🎨 Design a logo</div><div class="chip" onclick="quickAsk('Research market trends in India')">📊 Research trends</div><div class="chip" onclick="quickAsk('Build a landing page')">🌐 Build a page</div></div></div><div id="messages"></div></div>
+<div class="composer"><div class="composer-status" id="composerStatus">Manual Send Active</div><div class="composer-bar"><button class="icon-btn" onclick="openSheet()" title="Add to chat">+</button><textarea class="text-input" id="textInput" placeholder="Ask anything in Hindi or English..." rows="1" oninput="autoSize(this)" onkeydown="onKey(event)"></textarea><button class="icon-btn" id="micBtn" onclick="toggleMic()" title="Voice input">🎤</button><button class="send-btn" id="sendBtn" onclick="send()" disabled>➔</button></div></div>
+</div>
+<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet(event)"><div class="sheet"><div class="sheet-handle"></div><div class="sheet-title">Add to Chat</div><div class="sheet-grid" id="sheetGrid"></div></div></div>
+<div class="settings-overlay" id="settingsOverlay" onclick="closeSettings(event)"><div class="settings-panel"><button class="close-btn" onclick="closeSettingsDirect()">✕</button><h2>Settings</h2><div class="setting-row"><div><div class="setting-label">Theme</div><div class="setting-desc">Choose appearance</div></div></div><div class="theme-opts"><div class="theme-opt active" data-theme="light" onclick="setTheme('light',this)">☀️ Light</div><div class="theme-opt" data-theme="dark" onclick="setTheme('dark',this)">🌙 Dark</div><div class="theme-opt" data-theme="system" onclick="setTheme('system',this)">💻 System</div><div class="theme-opt" data-theme="sepia" onclick="setTheme('sepia',this)">📜 Sepia</div></div><div class="setting-row"><div><div class="setting-label">Voice Mode</div><div class="setting-desc">Manual send (safe)</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div><div class="setting-row"><div><div class="setting-label">Notifications</div><div class="setting-desc">Get project updates</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div><div class="setting-row"><div><div class="setting-label">Auto-save</div><div class="setting-desc">Save conversations locally</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div><div class="setting-row"><div><div class="setting-label">Language</div><div class="setting-desc">Hindi + English</div></div><span style="font-size:12px;color:var(--muted)">Auto-detect</span></div><div class="setting-row"><div><div class="setting-label">AI Model</div><div class="setting-desc">Clevora Core v1</div></div><span style="font-size:12px;color:var(--accent)">Active</span></div><div class="setting-row" style="flex-direction:column;align-items:flex-start"><div class="setting-label" style="margin-bottom:4px">Version</div><div style="font-size:11px;color:var(--muted)">Clevora AI v1.0.0 · Prototype · Local-first</div></div></div></div>
+<script>
+var capabilities=[{id:'1',label:'Camera',icon:'📷',enabled:true},{id:'2',label:'Photos',icon:'🖼️',enabled:true},{id:'3',label:'Files',icon:'📁',enabled:true},{id:'4',label:'Web Search',icon:'🌐',enabled:true},{id:'5',label:'Create Image',icon:'🎨',enabled:true},{id:'6',label:'Edit Image',icon:'✏️',enabled:true},{id:'7',label:'Generate Video',icon:'🎬',enabled:false,reason:'Local tool missing'},{id:'8',label:'Skills',icon:'🧩',enabled:true}];
+var agentState='ready';var seconds=0;var timerInt=null;var isListening=false;var recognition=null;
+function renderSheet(){var g=document.getElementById('sheetGrid');g.innerHTML=capabilities.map(function(c){return '<div class="sheet-tile'+(c.enabled?'':' disabled')+'" onclick="'+(c.enabled?'selectCap(\''+c.label+'\')':'')+'"><div class="tile-icon">'+c.icon+'</div><div class="tile-label">'+c.label+'</div>'+(c.enabled?'':'<div class="tile-reason">'+c.reason+'</div>')+'</div>';}).join('');}
+function openSheet(){document.getElementById('sheetOverlay').classList.add('open');renderSheet();}
+function closeSheet(e){if(e.target===e.currentTarget)document.getElementById('sheetOverlay').classList.remove('open');}
+function closeSheetDirect(){document.getElementById('sheetOverlay').classList.remove('open');}
+function selectCap(label){closeSheetDirect();var inp=document.getElementById('textInput');inp.value='['+label+'] ';inp.focus();autoSize(inp);updateSend();}
+function autoSize(el){el.style.height='auto';el.style.height=Math.min(100,el.scrollHeight)+'px';updateSend();}
+function updateSend(){var btn=document.getElementById('sendBtn');var text=document.getElementById('textInput').value.trim();btn.disabled=text.length===0;}
+function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
+function quickAsk(text){document.getElementById('textInput').value=text;updateSend();send();}
+function send(){var text=document.getElementById('textInput').value.trim();if(!text)return;addMessage('user',text);document.getElementById('textInput').value='';autoSize(document.getElementById('textInput'));document.getElementById('welcome').style.display='none';setAgentState('working');setTimeout(function(){var steps=[{label:'Analyzing request',done:true},{label:'Selecting AI model',done:true},{label:'Generating response',done:true}];var planHtml='<div class="task-plan"><div class="task-plan-header"><span>Task Plan</span><span>3/3 complete</span></div><ul class="plan-steps">'+steps.map(function(s){return '<li class="plan-step done"><span class="plan-step-dot"></span>'+s.label+'</li>';}).join('')+'</ul></div>';addMessage('ai',planHtml+'<div>Here is your response. This is a prototype — connect a backend (Supabase + AI API) to get real responses.</div>');setAgentState('ready');},3000);}
+function addMessage(role,text){var msgs=document.getElementById('messages');var div=document.createElement('div');div.className='msg '+role;var avatar=role==='user'?'You':'C';div.innerHTML='<div class="msg-avatar">'+avatar+'</div><div class="msg-bubble">'+text+'</div>';msgs.appendChild(div);var canvas=document.getElementById('canvas');canvas.scrollTop=canvas.scrollHeight;}
+function setAgentState(state){agentState=state;var dot=document.getElementById('statusDot');var txt=document.getElementById('statusText');var timer=document.getElementById('timer');dot.className='status-dot '+(state==='working'?'working':state==='offline'?'offline':'');if(state==='working'){txt.textContent='Working';timer.style.display='inline';seconds=0;timer.textContent='0s';timerInt=setInterval(function(){seconds++;timer.textContent=seconds+'s';},1000);}else{txt.textContent=state==='offline'?'Offline':'Ready';timer.style.display='none';if(timerInt)clearInterval(timerInt);}}
+function toggleMic(){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){alert('Voice input not supported in this browser. Try Chrome.');return;}if(isListening){if(recognition)recognition.stop();isListening=false;return;}recognition=new SR();recognition.lang='hi-IN';recognition.continuous=false;recognition.interimResults=true;var final='';recognition.onstart=function(){isListening=true;document.getElementById('micBtn').classList.add('active');document.getElementById('composerStatus').textContent='Listening — Review before sending';document.getElementById('composerStatus').classList.add('listening');};recognition.onresult=function(e){var interim='';for(var i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal)final+=e.results[i][0].transcript+' ';else interim+=e.results[i][0].transcript;}var inp=document.getElementById('textInput');inp.value=(final+interim).trim();autoSize(inp);updateSend();};recognition.onerror=function(e){alert('Voice error: '+e.error);};recognition.onend=function(){isListening=false;document.getElementById('micBtn').classList.remove('active');document.getElementById('composerStatus').textContent='Manual Send Active';document.getElementById('composerStatus').classList.remove('listening');};recognition.start();}
+function toggleSettings(){document.getElementById('settingsOverlay').classList.add('open');}
+function closeSettings(e){if(e.target===e.currentTarget)document.getElementById('settingsOverlay').classList.remove('open');}
+function closeSettingsDirect(){document.getElementById('settingsOverlay').classList.remove('open');}
+function setTheme(theme,el){document.querySelectorAll('.theme-opt').forEach(function(e){e.classList.remove('active');});el.classList.add('active');if(theme==='system'){var dark=window.matchMedia('(prefers-color-scheme:dark)').matches;document.documentElement.setAttribute('data-theme',dark?'dark':'light');}else if(theme==='sepia'){document.documentElement.setAttribute('data-theme','light');document.body.style.background='#f4ecd8';return;}else{document.documentElement.setAttribute('data-theme',theme);}document.body.style.background='';localStorage.setItem('clevora_app_theme',theme);}
+var savedTheme=localStorage.getItem('clevora_app_theme')||'light';if(savedTheme==='system'){var dark=window.matchMedia('(prefers-color-scheme:dark)').matches;document.documentElement.setAttribute('data-theme',dark?'dark':'light');}else{document.documentElement.setAttribute('data-theme',savedTheme);}document.querySelectorAll('.theme-opt').forEach(function(e){if(e.dataset.theme===savedTheme)e.classList.add('active');else e.classList.remove('active');});
+renderSheet();updateSend();
+</script>
+</body>
+</html>
